@@ -1,15 +1,18 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import axios from 'axios';
-import { useReactTable, getCoreRowModel, getSortedRowModel, createColumnHelper } from '@tanstack/react-table';
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  createColumnHelper,
+} from '@tanstack/react-table';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { FaTimes } from 'react-icons/fa';
+import { FaTimes, FaPlus, FaEdit } from 'react-icons/fa';
 import Table from './Table';
-import SearchBar from './SearchBar';
 import DetailsCard from './DetailsCard';
 import ActionIcons from './ActionIcons';
-import { FaPlus, FaEdit } from 'react-icons/fa';
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -66,8 +69,14 @@ const PeopleDirectory = () => {
         cell: (info) => (
           <ActionIcons
             row={info.row.original}
-            onEdit={() => setEditingRow(info.row.original)}
-            onDelete={() => handleDelete(info.row.original._id)}
+            onEdit={() => {
+              console.log('Edit button clicked for:', info.row.original);
+              setEditingRow(info.row.original);
+            }}
+            onDelete={() => {
+              console.log('Delete button clicked for:', info.row.original._id);
+              handleDelete(info.row.original._id);
+            }}
           />
         ),
       },
@@ -82,8 +91,10 @@ const PeopleDirectory = () => {
   });
 
   useEffect(() => {
+    console.log('Fetching data from API...');
     axios.get('/api/members')
       .then(response => {
+        console.log('Data fetched:', response.data);
         setData(response.data);
         setFilteredData(response.data);
       })
@@ -91,35 +102,43 @@ const PeopleDirectory = () => {
   }, []);
 
   const handleDelete = (id) => {
+    console.log('Delete function initiated for ID:', id);
     if (window.confirm('Are you sure you want to delete this member?')) {
       axios.delete(`/api/members/${id}`)
         .then(() => {
+          console.log('Member deleted successfully');
           setData(prevData => prevData.filter(item => item._id !== id));
           setFilteredData(prevData => prevData.filter(item => item._id !== id));
           setRowSelection(null);
           setTableColumns(5);
           alert('Member deleted successfully!');
         })
-        .catch(error => console.error('Error deleting member:', error));
+        .catch(error => {
+          console.error('Error deleting member:', error);
+          alert('Failed to delete member.');
+        });
     }
   };
 
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (file) {
+      console.log('File selected for upload:', file);
       const formData = new FormData();
       formData.append('file', file);
       formData.append('upload_preset', 'newEvona');
       formData.append('cloud_name', 'da7eitibw');
       try {
+        console.log('Uploading file...');
         const response = await axios.post(
           'https://api.cloudinary.com/v1_1/da7eitibw/image/upload',
           formData
         );
-
+        console.log('File uploaded, response:', response.data);
         if (response.data) {
           const url = response.data.secure_url;
           setProfilePhoto(url);
+          console.log('Profile photo URL set:', url);
         }
       } catch (error) {
         console.error('Error uploading image:', error);
@@ -129,48 +148,52 @@ const PeopleDirectory = () => {
   };
 
   const handleEditSubmit = async (values) => {
+    console.log('Edit submit initiated with values:', values);
     const profilePhotoUrl = profilePhoto || editingRow.profilePhoto;
-  
     const updatedValues = { ...values, profilePhoto: profilePhotoUrl };
-  
-    axios.put(`/api/members/${editingRow._id}`, updatedValues)
-      .then(response => {
-        setData(prevData =>
-          prevData.map(item => (item._id === editingRow._id ? response.data : item))
-        );
-        setFilteredData(prevData =>
-          prevData.map(item => (item._id === editingRow._id ? response.data : item))
-        );
-        setEditingRow(null);
-        reset();
-        setProfilePhoto(''); // Clear the profile photo state
-        alert('Member updated successfully!');
-      })
-      .catch(error => console.error('Error updating member:', error));
+    try {
+      console.log('Updating member with ID:', editingRow._id);
+      const response = await axios.put(`/api/members/${editingRow._id}`, updatedValues);
+      console.log('Member updated successfully:', response.data);
+      setData(prevData =>
+        prevData.map(item => (item._id === editingRow._id ? response.data : item))
+      );
+      setFilteredData(prevData =>
+        prevData.map(item => (item._id === editingRow._id ? response.data : item))
+      );
+      setEditingRow(null);
+      reset();
+      setProfilePhoto(''); // Clear the profile photo state
+      alert('Member updated successfully!');
+    } catch (error) {
+      console.error('Error updating member:', error);
+      alert('Failed to update member.');
+    }
   };
-  
+
   const handleAddSubmit = async (values) => {
+    console.log('Add submit initiated with values:', values);
     const profilePhotoUrl = profilePhoto || '';
-  
     const newValues = { ...values, profilePhoto: profilePhotoUrl };
-  
-    axios.post('/api/members', newValues)
-      .then(response => {
-        const newMember = response.data;
-        setData(prevData => [...prevData, newMember]);
-        setFilteredData(prevData => [...prevData, newMember]);
-        setIsAdding(false);
-        reset();
-        setProfilePhoto(''); // Clear the profile photo state
-        alert('Member added successfully!');
-      })
-      .catch(error => {
-        console.error('Error adding member:', error);
-        alert('Failed to add member.');
-      });
+    try {
+      console.log('Adding new member');
+      const response = await axios.post('/api/members', newValues);
+      console.log('New member added successfully:', response.data);
+      const newMember = response.data;
+      setData(prevData => [...prevData, newMember]);
+      setFilteredData(prevData => [...prevData, newMember]);
+      setIsAdding(false);
+      reset();
+      setProfilePhoto(''); // Clear the profile photo state
+      alert('Member added successfully!');
+    } catch (error) {
+      console.error('Error adding member:', error);
+      alert('Failed to add member.');
+    }
   };
 
   const handleSearch = (query) => {
+    console.log('Search query:', query);
     if (query) {
       setFilteredData(
         data.filter(item =>
@@ -185,6 +208,7 @@ const PeopleDirectory = () => {
   };
 
   const handleFilterChange = ({ roles, teams }) => {
+    console.log('Filter change with roles:', roles, 'and teams:', teams);
     setFilteredData(
       data.filter(item =>
         (roles.length === 0 || roles.includes(item.role)) &&
@@ -194,22 +218,39 @@ const PeopleDirectory = () => {
   };
 
   const handleRowClick = (row) => {
+    console.log('Row clicked:', row);
     setRowSelection(row);
     setTableColumns(2);
   };
 
   const handleCloseDetails = () => {
+    console.log('Closing details card');
     setRowSelection(null);
     setTableColumns(5);
   };
 
   return (
     <div className="p-5 ml-[250px]">
-      <SearchBar
-        onSearch={handleSearch}
-        onAddClick={() => setIsAdding(true)}
-        onFilterChange={handleFilterChange}
-      />
+      {/* Search and Add Bar */}
+      <div className="flex justify-between mb-4">
+        <div className="flex items-center">
+          <input
+            type="text"
+            placeholder="Search..."
+            onChange={(e) => handleSearch(e.target.value)}
+            className="px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+        <button
+          onClick={() => {
+            console.log('Add button clicked');
+            setIsAdding(true);
+          }}
+          className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700"
+        >
+          Add Member
+        </button>
+      </div>
 
       <div className="flex">
         <Table table={table} onRowClick={handleRowClick} />
@@ -223,116 +264,143 @@ const PeopleDirectory = () => {
       </div>
 
       {(editingRow || isAdding) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg w-[400px] relative shadow-lg">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">
-                {editingRow ? 'Edit Member' : 'Add Member'}
-              </h2>
-              <button
-                onClick={() => {
-                  if (editingRow) setEditingRow(null);
-                  if (isAdding) setIsAdding(false);
-                  reset();
-                }}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <FaTimes />
-              </button>
-            </div>
-
-            <form
-              onSubmit={handleSubmit(
-                editingRow ? handleEditSubmit : handleAddSubmit
-              )}
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-lg relative w-1/3">
+            <button
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+              onClick={() => {
+                console.log('Close modal clicked');
+                setEditingRow(null);
+                setIsAdding(false);
+                reset();
+              }}
             >
-              {/* Profile Photo */}
-              <div className="mb-6 flex flex-col items-center">
-                <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 mb-4">
-                  {profilePhoto || editingRow?.profilePhoto ? (
-                    <img
-                      src={profilePhoto || editingRow?.profilePhoto}
-                      alt="Profile"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500">
-                      No Image
-                    </div>
-                  )}
-                </div>
+              <FaTimes />
+            </button>
+            <form onSubmit={handleSubmit(editingRow ? handleEditSubmit : handleAddSubmit)}>
+  <h2 className="text-xl font-bold mb-4">
+    {editingRow ? 'Edit Member' : 'Add Member'}
+  </h2>
 
-                {/* Upload Photo Button with Edit Icon */}
-                <label className="text-sm font-medium text-gray-700 mb-2">
-                  Upload Profile Photo
-                </label>
-                <label className="cursor-pointer flex items-center text-indigo-600 hover:text-indigo-800">
-                  <FaEdit className="mr-2" />
-                  <input
-                    type="file"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                  Edit Photo
-                </label>
-              </div>
+  {/* Profile Photo */}
+  <div className="mb-6 flex flex-col items-center">
+    <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 mb-4">
+      {profilePhoto || editingRow?.profilePhoto ? (
+        <img
+          src={profilePhoto || editingRow?.profilePhoto}
+          alt="Profile"
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500">
+          No Image
+        </div>
+      )}
+    </div>
 
-              {/* Form Fields with Two Fields per Row */}
-              <div className="grid grid-cols-2 gap-4">
-                {/* Name */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Name</label>
-                  <input
-                    type="text"
-                    {...register('name')}
-                    defaultValue={editingRow?.name || ''}
-                    className="mt-1 block w-full px-3 py-2 border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-base"
-                  />
-                </div>
+    {/* Upload Photo Button with Edit Icon */}
+    <label className="text-sm font-medium text-gray-700 mb-2">
+      Upload Profile Photo
+    </label>
+    <label className="cursor-pointer flex items-center text-indigo-600 hover:text-indigo-800">
+      <FaEdit className="mr-2" />
+      <input
+        type="file"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+      Edit Photo
+    </label>
+  </div>
 
-                {/* Status */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Status</label>
-                  <input
-                    type="text"
-                    {...register('status')}
-                    defaultValue={editingRow?.status || ''}
-                    className="mt-1 block w-full px-3 py-2 border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-base"
-                  />
-                </div>
+  {/* Form Fields with Two Fields per Row */}
+  <div className="grid grid-cols-2 gap-4">
+    <input
+      type="text"
+      {...register('name')}
+      defaultValue={editingRow ? editingRow.name : ''}
+      placeholder="Name"
+      className="p-2 border rounded-md"
+    />
+    <input
+      type="text"
+      {...register('status')}
+      defaultValue={editingRow ? editingRow.status : ''}
+      placeholder="Status"
+      className="p-2 border rounded-md"
+    />
+    <input
+      type="text"
+      {...register('role')}
+      defaultValue={editingRow ? editingRow.role : ''}
+      placeholder="Role"
+      className="p-2 border rounded-md"
+    />
+    <input
+      type="email"
+      {...register('email')}
+      defaultValue={editingRow ? editingRow.email : ''}
+      placeholder="Email Address"
+      className="p-2 border rounded-md"
+    />
+    <input
+      type="text"
+      {...register('teams')}
+      defaultValue={editingRow ? editingRow.teams : ''}
+      placeholder="Teams"
+      className="p-2 border rounded-md"
+    />
+    <input
+      type="text"
+      {...register('workEmail')}
+      defaultValue={editingRow ? editingRow.workEmail : ''}
+      placeholder="Work Email"
+      className="p-2 border rounded-md"
+    />
+    <input
+      type="text"
+      {...register('gender')}
+      defaultValue={editingRow ? editingRow.gender : ''}
+      placeholder="Gender"
+      className="p-2 border rounded-md"
+    />
+    <input
+      type="text"
+      {...register('nationality')}
+      defaultValue={editingRow ? editingRow.nationality : ''}
+      placeholder="Nationality"
+      className="p-2 border rounded-md"
+    />
+    <input
+      type="text"
+      {...register('contactNo')}
+      defaultValue={editingRow ? editingRow.contactNo : ''}
+      placeholder="Contact Number"
+      className="p-2 border rounded-md"
+    />
+  </div>
 
-                {/* Role */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Role</label>
-                  <input
-                    type="text"
-                    {...register('role')}
-                    defaultValue={editingRow?.role || ''}
-                    className="mt-1 block w-full px-3 py-2 border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-base"
-                  />
-                </div>
+  <div className="flex justify-end mt-6">
+    <button
+      type="submit"
+      className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700"
+    >
+      {editingRow ? 'Save Changes' : 'Add Member'}
+    </button>
+    <button
+      type="button"
+      onClick={() => {
+        setEditingRow(null);
+        setIsAdding(false);
+        reset();
+      }}
+      className="ml-4 text-gray-700"
+    >
+      Cancel
+    </button>
+  </div>
+</form>
 
-                {/* Email */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
-                  <input
-                    type="email"
-                    {...register('email')}
-                    defaultValue={editingRow?.email || ''}
-                    className="mt-1 block w-full px-3 py-2 border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-base"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  className="bg-indigo-600 text-white px-6 py-3 rounded-md text-md hover:bg-indigo-700"
-                >
-                  {editingRow ? 'Save Changes' : 'Add Member'}
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
