@@ -4,7 +4,7 @@ import Dashboard from './pages/Dashboard.js';
 import Login from './pages/Login.js';
 import Overview from './components/Overview.js'
 import axios from 'axios'
-axios.defaults.baseURL = 'http://localhost:8080';
+axios.defaults.baseURL = 'https://edunova-o17c.onrender.com';
 const App = () => {
   return (
     <Router>

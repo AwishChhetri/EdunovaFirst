@@ -9,7 +9,7 @@ const Dashboard = () => {
       <div style={styles.body}>
         <Sidebar />
         <div style={styles.content}>
-          <h1 style={styles.title}>Welcome to the Dashboard</h1>
+          <h1 style={styles.title}>Welcome! Abish</h1>
         </div>
       </div>
     </div>

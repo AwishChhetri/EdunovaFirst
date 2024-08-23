@@ -10,7 +10,7 @@ const Overview = () => {
       <div style={styles.body}>
         <Sidebar />
         <div style={styles.content}>
-          <h1 style={styles.title}>Welcome to the Overview</h1>
+          <h1 style={styles.title}>Welcome to the Team</h1>
           <PeopleDirectory />
         </div>
       </div>
