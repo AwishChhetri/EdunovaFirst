@@ -5,7 +5,7 @@ import { FaBell, FaUserCircle } from 'react-icons/fa';
 const Header = () => {
   return (
     <header style={styles.header}>
-      <div style={styles.logo}>MyLogo</div>
+      <div style={styles.logo}>People.Co</div>
       <div style={styles.headerIcons}>
         <FaBell style={styles.icon} />
         <FaUserCircle style={styles.icon} />
