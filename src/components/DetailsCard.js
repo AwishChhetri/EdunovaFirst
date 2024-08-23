@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaTimes } from 'react-icons/fa';
 import axios from 'axios';
-axios.defaults.baseURL = 'http://localhost:8080';
 
 const DetailsCard = ({ rowSelection, onClose }) => {
   const [details, setDetails] = useState(null);
@@ -22,22 +21,68 @@ const DetailsCard = ({ rowSelection, onClose }) => {
   }
 
   return (
-    <div style={styles.card}>
+    <div className="bg-white shadow-lg rounded-lg p-6 relative max-w-md">
+      {/* Close Button */}
       <button style={styles.closeButton} onClick={onClose}>
         <FaTimes />
       </button>
-      <h2 style={styles.cardTitle}>Details</h2>
-      <p><strong>Name:</strong> {details.name}</p>
-      <p><strong>Status:</strong> {details.status}</p>
-      <p><strong>Role:</strong> {details.role}</p>
-      <p><strong>Email:</strong> {details.email}</p>
-      <p><strong>Work Email:</strong> {details.workEmail || 'N/A'}</p> {/* Display 'N/A' if workEmail is not available */}
-      <p><strong>Teams:</strong> {details.teams}</p>
-      <p><strong>Date of Birth:</strong> {details.dob ? new Date(details.dob).toLocaleDateString() : 'N/A'}</p> {/* Format date */}
-      <p><strong>Gender:</strong> {details.gender || 'N/A'}</p> {/* Display 'N/A' if gender is not available */}
-      <p><strong>Nationality:</strong> {details.nationality || 'N/A'}</p> {/* Display 'N/A' if nationality is not available */}
-      <p><strong>Contact No:</strong> {details.contactNo || 'N/A'}</p> {/* Display 'N/A' if contactNo is not available */}
-      <button style={styles.cancelButton} onClick={onClose}>
+      
+      {/* Profile Section */}
+      <div className="flex items-center mb-6">
+        <img
+          src={details.profilePhoto || 'https://via.placeholder.com/150'} // Fallback to placeholder if no profile photo
+          alt="Profile"
+          className="w-20 h-20 rounded-full mr-4"
+        />
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900">{details.name}</h2>
+          <p className="text-gray-500">@{details.username}</p>
+          <p className="text-gray-500">{details.role}</p>
+        </div>
+      </div>
+
+      {/* Personal Information */}
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold text-gray-700 mb-4">Personal Information</h3>
+        <ul className="space-y-2">
+          <li className="flex justify-between">
+            <span className="text-gray-600">Date of Birth</span>
+            <span className="text-gray-800">{details.dob ? new Date(details.dob).toLocaleDateString() : 'N/A'}</span>
+          </li>
+          <li className="flex justify-between">
+            <span className="text-gray-600">Gender</span>
+            <span className="text-gray-800">{details.gender || 'N/A'}</span>
+          </li>
+          <li className="flex justify-between">
+            <span className="text-gray-600">Nationality</span>
+            <span className="text-gray-800">{details.nationality || 'N/A'}</span>
+          </li>
+          <li className="flex justify-between">
+            <span className="text-gray-600">Contact No.</span>
+            <span className="text-gray-800">{details.contactNo || 'N/A'}</span>
+          </li>
+          <li className="flex justify-between">
+            <span className="text-gray-600">Email</span>
+            <span className="text-gray-800">{details.email}</span>
+          </li>
+          <li className="flex justify-between">
+            <span className="text-gray-600">Work Email</span>
+            <span className="text-gray-800">{details.workEmail || 'N/A'}</span>
+          </li>
+        </ul>
+      </div>
+
+      {/* Research & Publication */}
+      <div className="bg-gray-100 p-4 rounded-lg">
+        <h3 className="text-md font-semibold text-gray-400 mb-2">Research & Publication</h3>
+        <p className="text-gray-300 mb-4">{details.researchPublication}</p>
+        <a href={details.publicationLink} className="text-orange-500 font-bold hover:underline">
+          SEE PUBLICATION...
+        </a>
+      </div>
+
+      {/* Cancel Button */}
+      <button className="mt-4 w-full py-2 bg-red-500 text-white rounded-lg hover:bg-red-600" onClick={onClose}>
         Cancel
       </button>
     </div>
@@ -45,33 +90,15 @@ const DetailsCard = ({ rowSelection, onClose }) => {
 };
 
 const styles = {
-  card: {
-    marginTop: '20px',
-    padding: '20px',
-    backgroundColor: '#fff',
-    borderRadius: '4px',
-    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-    position: 'relative', // Added for the close button positioning
-  },
-  cardTitle: { marginBottom: '10px' },
   closeButton: {
+    position: 'absolute',
+    top: '10px',
+    right: '10px',
     background: 'none',
     border: 'none',
     cursor: 'pointer',
     fontSize: '20px',
     color: '#555',
-    position: 'absolute',
-    top: '10px',
-    right: '10px',
-  },
-  cancelButton: {
-    padding: '10px 20px',
-    backgroundColor: '#f44336',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    marginTop: '10px', // Added margin-top for spacing
   },
   loading: {
     textAlign: 'center',
